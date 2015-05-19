@@ -2,14 +2,14 @@
     'use strict';
 
     /**
-    * Maplace.js 0.1.33
+    * Maplace.js 0.1.32
     *
     * Copyright (c) 2013 Daniele Moraschi
     * Licensed under the MIT license
     * For all details and documentation:
     * http://maplacejs.com
     *
-    * @version  0.1.33
+    * @version  0.1.32
     */
 
 
@@ -72,7 +72,7 @@
                 index = hash || (i + 1),
                 title = ttl || this.o.locations[i].title,
                 el_a = $('<a data-load="' + index + '" id="ullist_a_' + index + '" href="#' + index + '" title="' + title + '"><span>' + (title || ('#' + (i + 1))) + '</span></a>');
-            
+
             el_a.css(this.o.controls_applycss ? {
                 color: '#666',
                 display: 'block',
@@ -134,10 +134,10 @@
         /**
         * Create a new instance
         * @class Maplace
-        * @constructor  
+        * @constructor
         */
         function Maplace(args) {
-            this.VERSION = '0.1.33';
+            this.VERSION = '0.1.32';
             this.loaded = false;
             this.markers = [];
             this.circles = [];
@@ -145,7 +145,6 @@
             this.view_all_key = 'all';
 
             this.infowindow = null;
-            this.maxZIndex = 0;
             this.ln = 0;
             this.oMap = false;
             this.oBounds = null;
@@ -277,7 +276,7 @@
                         position: 'relative',
                         overflow: 'hidden'
                     });
-                    
+
                     //create the container div into map_div
                     this.canvas_map = $('<div>').addClass('canvas_map').css({
                         width: '100%',
@@ -295,17 +294,13 @@
                 self.oMap.setOptions(this.o.map_options);
             }
 
-            //if styled
-            count = 0;
-            for (i in this.o.styles) {
-                if (this.o.styles.hasOwnProperty(i)) {
-                    count++;
-                    this.oMap.mapTypes.set('map_style_' + count, new google.maps.StyledMapType(this.o.styles[i], {
-                        name: i
-                    }));
-                    this.oMap.setMapTypeId('map_style_' + count);
-                }
-            }
+            //if styled, assign the entire style object/array to the map
+			if(this.o.styles.length > 0){
+				this.oMap.mapTypes.set('map_style_0', new google.maps.StyledMapType(this.o.styles, {
+					name: 'map_style_0'
+				}));
+				this.oMap.setMapTypeId('map_style_0');
+			}
         };
 
         //adds markers to the map
@@ -338,17 +333,15 @@
             //set obj map
             point.map = this.oMap;
             point.position = new google.maps.LatLng(point.lat, point.lon);
-            point.zIndex = point.zIndex === undefined ? 10000 : (point.zIndex + 100);
+            point.zIndex = 10000;
             point.visible = visibility === undefined  ? this.o.show_markers : visibility;
-
-            this.o.maxZIndex = point.zIndex > this.maxZIndex ? point.zIndex : this.maxZIndex;
 
             if (point.image) {
                 point.icon = new google.maps.MarkerImage(
                     point.image,
                     new google.maps.Size(point.image_w || 32, point.image_h || 32),
                     new google.maps.Point(0, 0),
-                    new google.maps.Point((point.image_w || 32) / 2, (point.image_h || 32)  / 2)
+                    new google.maps.Point(image_w / 2, image_h / 2)
                 );
             }
 
@@ -360,20 +353,20 @@
             var def_stroke_opz,
                 def_circle_opz,
                 circle;
-            
+
             circle = $.extend({}, point);
             def_stroke_opz = $.extend({}, this.o.stroke_options);
             def_circle_opz = $.extend({}, this.o.circle_options);
 
             $.extend(def_stroke_opz, point.stroke_options || {});
             $.extend(circle, def_stroke_opz);
-            
+
             $.extend(def_circle_opz, point.circle_options || {});
             $.extend(circle, def_circle_opz);
 
             circle.center = point.position;
             circle.draggable = false;
-            circle.zIndex = point.zIndex > 0 ? point.zIndex - 10 : 1;
+            circle.zIndex = 9000;
 
             return circle;
         };
@@ -542,7 +535,7 @@
                 //create the marker and add click event
                 marker = new google.maps.Marker(point);
                 this.add_markerEv(index, point, marker);
-                
+
                 //extends bounds with this location
                 this.oBounds.extend(point.position);
 
@@ -593,12 +586,12 @@
                     a,
                     point,
                     stroke = $.extend({}, this.o.stroke_options);
-                
+
                 stroke.path = [];
                 stroke.draggable = this.o.draggable;
                 stroke.editable = this.o.editable;
                 stroke.map = this.oMap;
-                stroke.zIndex = this.o.maxZIndex + 100;
+                stroke.zIndex = 11000;
 
                 //create the path and location marker
                 for (a = 0; a < this.ln; a++) {
@@ -622,12 +615,12 @@
                     a,
                     point,
                     stroke = $.extend({}, this.o.stroke_options);
-                
+
                 stroke.path = [];
                 stroke.draggable = this.o.draggable;
                 stroke.editable = this.o.editable;
                 stroke.map = this.oMap;
-                stroke.zIndex = this.o.maxZIndex + 100;
+                stroke.zIndex = 11000;
 
                 //create the path and location marker
                 for (a = 0; a < this.ln; a++) {
@@ -700,7 +693,7 @@
                 this.o.directions_options.waypoints = waypoints;
 
                 this.directionsService || (this.directionsService = new google.maps.DirectionsService());
-                this.directionsDisplay 
+                this.directionsDisplay
                     ? this.directionsDisplay.setOptions({ draggable: this.o.draggable })
                     : this.directionsDisplay = new google.maps.DirectionsRenderer({ draggable: this.o.draggable });
 
@@ -789,7 +782,7 @@
                 return;
             }
 
-            //else 
+            //else
             //controls in map
             var cntr = $('<div class="on_gmap ' + this.o.controls_type + ' gmap_controls"></div>')
                 .css(this.o.controls_applycss ? { margin: '5px' } : {}),
@@ -821,7 +814,7 @@
             this.directionsDisplay && this.directionsDisplay.setMap(null);
 
             for (var i = this.markers.length - 1; i >= 0; i -= 1) {
-                try { 
+                try {
                     this.markers[i] && this.markers[i].setMap(null);
                 } catch (err) {
                     self.debug('init_map::markers::setMap', err.stack);
@@ -832,7 +825,7 @@
             this.markers = [];
 
             for (var i = this.circles.length - 1; i >= 0; i -= 1) {
-                try { 
+                try {
                     this.circles[i] && this.circles[i].setMap(null);
                 } catch (err) {
                     self.debug('init_map::circles::setMap', err.stack);
@@ -846,7 +839,7 @@
                 this.oMap.controls[this.o.controls_position].forEach(function (element, index) {
                     try {
                         self.oMap.controls[this.o.controls_position].removeAt(index);
-                    } catch (err) { 
+                    } catch (err) {
                         self.debug('init_map::removeAt', err.stack);
                     }
                 });
@@ -861,7 +854,7 @@
             if (this.ln === 1) {
                 if (this.o.map_options.set_center) {
                     this.oMap.setCenter(new google.maps.LatLng(this.o.map_options.set_center[0], this.o.map_options.set_center[1]));
-                
+
                 } else {
                     this.oMap.fitBounds(this.oBounds);
                     this.ViewOnMap(1);
@@ -873,7 +866,7 @@
             } else if (this.ln === 0) {
                 if (this.o.map_options.set_center) {
                     this.oMap.setCenter(new google.maps.LatLng(this.o.map_options.set_center[0], this.o.map_options.set_center[1]));
-                
+
                 } else {
                     this.oMap.fitBounds(this.oBounds);
                 }
@@ -883,15 +876,15 @@
             //n+ locations
             } else {
                 this.oMap.fitBounds(this.oBounds);
-                
+
                 //check the start option
                 if (typeof (this.o.start - 0) === 'number' && this.o.start > 0 && this.o.start <= this.ln) {
                     this.ViewOnMap(this.o.start);
-                
+
                 //check if set_center exists
                 } else if (this.o.map_options.set_center) {
                     this.oMap.setCenter(new google.maps.LatLng(this.o.map_options.set_center[0], this.o.map_options.set_center[1]));
-                
+
                 //view all
                 } else {
                     this.ViewOnMap(this.view_all_key);
@@ -1074,7 +1067,7 @@
 
             //add markers
             this.add_markers_to_objMap();
-            
+
             //generate controls
             if ((this.ln > 1 && this.o.generate_controls) || this.o.force_generate_controls)  {
                 this.o.generate_controls = true;
